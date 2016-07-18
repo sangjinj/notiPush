@@ -15,5 +15,6 @@ public class notipushActivity extends AppCompatActivity {
         Log.d("-----","");
         Log.d("-----","");
         Log.d("-----","");
+        Log.d("-----","");
     }
 }

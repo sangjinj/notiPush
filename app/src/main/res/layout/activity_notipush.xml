@@ -11,6 +11,27 @@
         android:layout_height="wrap_content"
         android:text="알림보내기"
         android:id="@+id/btNoti"/>
+
+    <Button
+        android:id="@+id/btStart"
+        android:text="Start"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
+
+    <!-- 종료 -->
+    <Button
+        android:id="@+id/btStop"
+        android:text="Stop"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
+
+    <!-- 상태표시 -->
+    <TextView
+        android:id="@+id/text_view"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" />
+
+
 </LinearLayout>
 
 

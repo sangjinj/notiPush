@@ -4,6 +4,7 @@ package webview.sangjinj.notipush;
         import android.app.Notification;
         import android.app.NotificationManager;
         import android.app.PendingIntent;
+        import android.content.ComponentName;
         import android.content.Context;
         import android.content.Intent;
         import android.database.Cursor;
@@ -14,6 +15,8 @@ package webview.sangjinj.notipush;
         import android.view.View;
         import android.widget.Button;
         import android.widget.TextView;
+
+        import java.util.Random;
 /*
         안드로이드 로컬에서 사용하는 databases이다.
         - 실제 스마트폰 단말기 내의 data/data/databases경로에 파일이 만들어지게된다.
@@ -29,21 +32,24 @@ package webview.sangjinj.notipush;
 public class notipushActivity extends Activity implements View.OnClickListener{
 
         String a="";
-        Button btNoti;
+        Button btNoti, btStart,btStop;
+        ComponentName mService;    // 시작 서비스의 이름
+        TextView mTextView;              // 서비스 상태 표시
 
-        protected void onCreate(Bundle savedInstanceState) {
+
+
+    protected void onCreate(Bundle savedInstanceState) {
 
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_notipush);
 
-
+            mTextView = (TextView)findViewById(R.id.text_view);
+            btStart = (Button)findViewById(R.id.btStart);
+            btStop = (Button)findViewById(R.id.btStop);
             btNoti = (Button) findViewById(R.id.btNoti);
             btNoti.setOnClickListener(this);
-
-
-
-
-
+            btStart.setOnClickListener(this);
+            btStop.setOnClickListener(this);
         }
 
     private static void generateNotification(Context context, String message) {
@@ -54,35 +60,50 @@ public class notipushActivity extends Activity implements View.OnClickListener{
         Intent intent = new Intent(context, notipushActivity.class);
         PendingIntent contentIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        NotificationCompat.Builder b = new NotificationCompat.Builder(context);
+       // NotificationCompat.Builder b = new NotificationCompat.Builder(context);
         //Notification notification = new Notification(R.drawable.jellybean, "Nomal Notification", System.currentTimeMillis());
         //Notification notification = new Notification(R.drawable.icon_spot, "일정이 얼마 남지 않았습니다. ", System.currentTimeMillis());
+
+        Notification notif = new Notification.Builder(context)
+                .setAutoCancel(true)
+                .setContentTitle("투어메이트 일정 알림")
+                .setContentText("제목")
+                .setSmallIcon(R.drawable.icon_spot)
+                .setContentIntent(contentIntent)
+                //.setLargeIcon(R.drawable.jellybean)
+                .setStyle(new Notification.BigTextStyle()
+                        .bigText(message))
+                .build();
+
+
 
         // flag를 설정합니다
         // FLAG_AUTO_CANCEL : 알림(터치하면 지워짐), FLAG_ONGOING_EVENT : 진행중(게속 표시)
         //notification.flags = Notification.FLAG_AUTO_CANCEL;
 
-        b.setAutoCancel(true)
-                .setDefaults(Notification.DEFAULT_ALL)
-                .setWhen(System.currentTimeMillis())
-                .setSmallIcon(icon)
-                .setTicker("TourMate")
-                .setContentTitle("일정알림")
-                .setContentText(message)
-                .setDefaults(Notification.DEFAULT_LIGHTS| Notification.DEFAULT_SOUND)
-                .setContentIntent(contentIntent)
-                .setContentInfo("Info");
-
+//        b.setAutoCancel(true)
+//
+//                .setDefaults(Notification.DEFAULT_ALL)
+//                .setWhen(System.currentTimeMillis())
+//                .setSmallIcon(icon)
+//                .setTicker("TourMate")
+//                .setContentTitle("일정알림")
+//                .setContentText(message)
+//                .setDefaults(Notification.DEFAULT_LIGHTS| Notification.DEFAULT_SOUND)
+//                .setContentIntent(contentIntent)
+//                .setContentInfo("Info");
 
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.notify(1, b.build());
+        Random random = new Random();
+        int rNum = random.nextInt(100);
+        System.out.println("rNum :::::::::::::::::::::: " + rNum);
+        notificationManager.notify(rNum, notif);
 
     }
 
     @Override
     public void onClick(View view) {
-
-        //데이터베이스 구축 전담 객체를 사용하여 sqlite db를 생성
+//데이터베이스 구축 전담 객체를 사용하여 sqlite db를 생성
         MyOpenHelper helper = new MyOpenHelper(this);
         TextView tb = (TextView)findViewById(R.id.a);
 
@@ -98,7 +119,6 @@ public class notipushActivity extends Activity implements View.OnClickListener{
         SQLiteDatabase db = helper.getReadableDatabase();
         // db.execSQL("insert into member(name, pwd) values ('sangjinj01', 'pwd01');");
 
-
         Cursor rs = db.rawQuery("select * from member;", null);
         //Cursor rs = db.rawQuery("select count(*) as memCnt from member;", null);
 
@@ -107,12 +127,54 @@ public class notipushActivity extends Activity implements View.OnClickListener{
             System.out.println("pwd ::::::::::::::::: "+rs.getString(1));
             a = a+rs.getString(0)+"::: "+rs.getString(1)+" \n";
             //tb.setText(a);
-
         }
         tb.setText(a);
         db.close();
 
+        switch (view.getId()){
+            case R.id.btNoti :
+                System.out.println("@@@@@@@@@@@@@@@@@@@@@ START NOTIFICATION");
+                generateNotification(this, a);
+                break;
 
-        generateNotification(this, a);
+            case R.id.btStart :
+                System.out.println("@@@@@@@@@@@@@@@@@@@@@ START SWITCH");
+                startService();
+                break;
+
+            case R.id.btStop:
+                System.out.println("@@@@@@@@@@@@@@@@@@@@@ STOP SWITCH");
+                stopService();
+                break;
+
+        }
     }
+
+    // 서비스 시작 요청
+    private void startService() {
+        System.out.println("############### START SERVICE ###################");
+        mService = startService(new Intent(this, ServiceTest.class));
+
+       //mTextView.append(mService.toShortString()+" started.\n");
+    }
+
+
+
+    // 실행한 서비스 중지 요청
+
+    private void stopService() {
+        System.out.println("############### STOP SERVICE ###################");
+//        if (mService == null) {
+//            mTextView.append("No requested service.\n");
+//            return;
+//        }
+//
+//        Intent i = new Intent();
+//        i.setComponent(mService);
+//        if (stopService(i))
+//            mTextView.append(mService.toShortString()+" is stopped.\n");
+//        else
+//            mTextView.append(mService.toShortString()+" is alrady stopped.\n");
+    }
+
 }
